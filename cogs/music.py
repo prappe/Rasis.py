@@ -31,7 +31,8 @@ class music:
         else:
             vc = ctx.message.author.voice_channel.name
             playr = await self.connections[vc].create_ytdl_player(ctx.message.content[9:].strip(),
-                                                                  ytdl_options={'ignoreerrors': True})
+                                                                  ytdl_options={'ignoreerrors': True,
+                                                                                'noplaylist': True})
             self.queues[vc].append(playr)
             await asyncio.sleep(1)
             if vc not in self.playing or not self.playing[vc]:
