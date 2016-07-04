@@ -22,7 +22,7 @@ class music:
             if ctx.message.author.voice_channel.name in self.connections:
                 v = 'Currently playing in ' + ctx.message.author.voice_channel.name + ':\n'
                 x = self.queues[ctx.message.author.voice_channel.name][0]
-                v += x.title + ' [' + str(floor(x.duration / 60)) + ':'
+                v += x.title + ' [' + str(math.floor(x.duration / 60)) + ':'
                 v += str(x.duration % 60) + ']\n'
                 await self.rasis.say(v)
 
@@ -44,10 +44,13 @@ class music:
         self.playing[vc] = True
         try:
             self.queues[vc][0].start()
-        while not self.queues[vc][0].is_done():
-            await asyncio.sleep(5)
+        finally:
+            while not self.queues[vc][0].is_done():
+                await asyncio.sleep(5)
         try:
             self.queues[vc][0].start()
+        except Exception as e:
+            do = 'nothing'
         else:
             self.queues[vc].pop(0)
         if len(self.queues[vc]) == 0:
@@ -75,7 +78,7 @@ class music:
 
     @yt.command(name='vol', pass_context=True)
     async def vol(self, ctx):
-        self.queues[ctx.message.author.voice_channel.name][0].volume = float(ctx.message.content[7:])
+        self.queues[ctx.message.author.voice_channel.name][0].volume = float(ctx.message.content[9:])
 
 
 def setup(rasis):
