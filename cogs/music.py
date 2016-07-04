@@ -13,15 +13,17 @@ class music:
         self.connections = {}
         self.queues = {}
         self.playing = {}
-        discord.opus.load_opus(json.load(open('config.json'))["opusdir"])
+        # this line not needed on Linux apparently
+        # discord.opus.load_opus(json.load(open('config.json'))["opusdir"])
 
     @commands.group(pass_context=True)
     async def yt(self, ctx):
         if ctx.invoked_subcommand is None:
             if ctx.message.author.voice_channel.name in self.connections:
-                v = 'Current queue for ' + ctx.message.author.voice_channel.name + ':\n'
-                for x in self.queues[ctx.message.author.voice_channel.name]:
-                    v += x.title + ' [' + str(round(x.duration / 60)) + ':' + str(x.duration % 60) + ']\n'
+                v = 'Currently playing in ' + ctx.message.author.voice_channel.name + ':\n'
+                x = self.queues[ctx.message.author.voice_channel.name][0]
+                v += x.title + ' [' + str(floor(x.duration / 60)) + ':'
+                v += str(x.duration % 60) + ']\n'
                 await self.rasis.say(v)
 
     @yt.command(name='play', pass_context=True)
@@ -40,10 +42,14 @@ class music:
 
     async def qloop(self, vc):
         self.playing[vc] = True
-        self.queues[vc][0].start()
+        try:
+            self.queues[vc][0].start()
         while not self.queues[vc][0].is_done():
             await asyncio.sleep(5)
-        self.queues[vc].pop(0)
+        try:
+            self.queues[vc][0].start()
+        else:
+            self.queues[vc].pop(0)
         if len(self.queues[vc]) == 0:
             self.playing[vc] = False
         else:
@@ -57,6 +63,19 @@ class music:
                 self.queues[ctx.message.author.voice_channel.name] = []
         except discord.DiscordException as e:
             await self.rasis.say('Oh shit: `{}` : {}'.format(type(e).__name__, e))
+
+    @yt.command(name='destroy', pass_context=True)
+    async def destroy(self, ctx):
+        try:
+            if ctx.message.author.voice_channel.name in self.connections:
+                self.connections[ctx.message.author.voice_channel.name].disconnect()
+                self.queues[ctx.message.author.voice_channel.name] = []
+        except discord.DiscordException as e:
+            await self.rasis.say('Oh shit: `{}` : {}'.format(type(e).__name__, e))
+
+    @yt.command(name='vol', pass_context=True)
+    async def vol(self, ctx):
+        self.queues[ctx.message.author.voice_channel.name][0].volume = float(ctx.message.content[7:])
 
 
 def setup(rasis):
