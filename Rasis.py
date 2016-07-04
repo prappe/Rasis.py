@@ -7,7 +7,7 @@ import psutil
 from discord.ext import commands
 from cogs.utils import checks
 
-rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 59
+rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 60
                      by Pråppe — built with discord.py''',
                      pm_help=None, help_attrs=dict(hidden=True))
 exts = ['cogs.music', 'cogs.times']

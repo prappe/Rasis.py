@@ -42,17 +42,10 @@ class music:
 
     async def qloop(self, vc):
         self.playing[vc] = True
-        try:
-            self.queues[vc][0].start()
-        finally:
-            while not self.queues[vc][0].is_done():
-                await asyncio.sleep(5)
-        try:
-            self.queues[vc][0].start()
-        except Exception as e:
-            do = 'nothing'
-        else:
-            self.queues[vc].pop(0)
+        self.queues[vc][0].start()
+        while not self.queues[vc][0].is_done():
+            await asyncio.sleep(5)
+        self.queues[vc].pop(0)
         if len(self.queues[vc]) == 0:
             self.playing[vc] = False
         else:
