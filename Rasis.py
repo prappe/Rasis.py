@@ -6,11 +6,15 @@ import os
 import psutil
 from discord.ext import commands
 from cogs.utils import checks
+import livejson
+import math
 
-rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 60
+rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 66
                      by Pråppe — built with discord.py''',
                      pm_help=None, help_attrs=dict(hidden=True))
 exts = ['cogs.music', 'cogs.times']
+
+xpx = livejson.File('xp.json')
 
 
 @rasis.event
@@ -28,8 +32,90 @@ async def on_ready():
 
 
 @rasis.event
-async def on_message(message):
-    await rasis.process_commands(message)
+async def on_message(m):
+    await rasis.process_commands(m)
+    if m.author.id not in xpx:
+        xpx[m.author.id] = {}
+        xpx[m.author.id]['xp'] = 0
+        xpx[m.author.id]['lvl'] = 1
+    xpx[m.author.id]['xp'] += len(m.content) + 7
+    if len(m.content) > 1200:
+        xpx[m.author.id]['xp'] -= (len(m.content) + 9)
+    xpx[m.author.id]['name'] = m.author.display_name
+
+
+@rasis.command(pass_context=True)
+async def xp(ctx):
+    """
+    Experience system description. TODO: Don't forget to write this.
+    """
+    if len(ctx.message.mentions) != 0:
+        u = xpx[ctx.message.mentions[0].id]
+        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+        if u['lvl'] < 1:
+            u['lvl'] = 1
+        await rasis.say('{} is level {} with {}XP. They have {}XP to go before the next level.'.format(ctx.message.mentions[0].display_name, u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
+    else:
+        u = xpx[ctx.message.author.id]
+        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+        if u['lvl'] < 1:
+            u['lvl'] = 1
+        await rasis.say('You are level {} with {}XP. You have {}XP to go before the next level.'.format(u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
+
+
+def _nextXP(xp, lvl):
+    _xp = 1000 * (1.3 ** lvl)
+    return math.floor(_xp - xp)
+
+
+@rasis.command(pass_context=True)
+async def rank(ctx):
+    """
+    XP Ranking.
+    """
+    _xpx = {}
+    for k in xpx:
+        _xpx[k] = xpx[k]['xp']
+    _u = []
+    for u in sorted(_xpx, key=_xpx.get, reverse=True):
+        _u.append(u)
+        xpx[u]['rank'] = len(_u)
+    if len(ctx.message.mentions) != 0:
+        u = xpx[ctx.message.mentions[0].id]
+        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+        if u['lvl'] < 1:
+            u['lvl'] = 1
+        await rasis.say('{} is #{} at level {} with {}XP.'.format(ctx.message.mentions[0].display_name, xpx[ctx.message.mentions[0].id]['rank'], xpx[ctx.message.mentions[0].id]['lvl'], xpx[ctx.message.mentions[0].id]['xp']))
+    else:
+        u = xpx[ctx.message.author.id]
+        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+        if u['lvl'] < 1:
+            u['lvl'] = 1
+        await rasis.say('You are #{} at level {} with {}XP.'.format(xpx[ctx.message.author.id]['rank'], xpx[ctx.message.author.id]['lvl'], xpx[ctx.message.author.id]['xp']))
+
+
+@rasis.command(pass_context=True)
+async def top(ctx):
+    """
+    XP Leaderboards.
+    """
+    _xpx = {}
+    for k in xpx:
+        _xpx[k] = xpx[k]['xp']
+    _u = []
+    for u in sorted(_xpx, key=_xpx.get, reverse=True):
+        _u.append(u)
+        xpx[u]['rank'] = len(_u)
+    m = 'Top 10 users:'
+    i = 1
+    for u in _u[0:10]:
+        xpx[u]['lvl'] = math.floor(math.log((xpx[u]['xp'] / 1000), 1.3)) + 1
+        if xpx[u]['lvl'] < 1:
+            xpx[u]['lvl'] = 1
+        m += '\n#{}: {} at level {} with {}XP.'.format(i, xpx[u]['name'], xpx[u]['lvl'], xpx[u]['xp'])
+        i += 1
+        x = None
+    await rasis.say(m)
 
 
 @rasis.command(description="what the fuck do you think it is")
