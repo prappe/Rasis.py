@@ -8,9 +8,10 @@ from discord.ext import commands
 from cogs.utils import checks
 import livejson
 import math
+import requests
 
-rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 66
-                     by Pråppe — built with discord.py''',
+rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 74
+                     by Prappe — built with discord.py''',
                      pm_help=None, help_attrs=dict(hidden=True))
 exts = ['cogs.music', 'cogs.times']
 
@@ -42,6 +43,20 @@ async def on_message(m):
     if len(m.content) > 1200:
         xpx[m.author.id]['xp'] -= (len(m.content) + 9)
     xpx[m.author.id]['name'] = m.author.display_name
+
+
+@rasis.command(description="Toontown invasions.")
+async def inv():
+    """Toontown invasions."""
+    r = requests.get('https://www.toontownrewritten.com/api/invasions')
+    ix = r.json()
+    if ix['error'] is not None:
+        await rasis.say('Some error occurred: {}'.format(ix['error']))
+    else:
+        m = '*There are {} invasions in ToonTown right now.*'.format(len(ix['invasions']))
+        for n, i in ix['invasions'].items():
+            m += '\n**{}** invasion in {}: {} cogs defeated'.format(i['type'], n, i['progress'])
+        await rasis.say(m)
 
 
 @rasis.command(pass_context=True)
