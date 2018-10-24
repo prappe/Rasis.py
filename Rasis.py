@@ -129,7 +129,7 @@ async def top(ctx):
             xpx[u]['lvl'] = 1
         m += '\n#{}: {} at level {} with {}XP.'.format(i, xpx[u]['name'], xpx[u]['lvl'], xpx[u]['xp'])
         i += 1
-        x = None
+        # x = None
     await rasis.say(m)
 
 
