@@ -16,7 +16,7 @@ rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 74
 rasis.session = aiohttp.ClientSession(loop=rasis.loop)
 exts = ['cogs.music', 'cogs.times']
 
-xpw_x = livejson.File('xp.json')
+xp_list = livejson.File('xp.json')
 
 
 @rasis.event
@@ -36,14 +36,15 @@ async def on_ready():
 @rasis.event
 async def on_message(m):
     await rasis.process_commands(m)
-    if m.author.id not in xpw_x:
-        xpw_x[m.author.id] = {}
-        xpw_x[m.author.id]['xp'] = 0
-        xpw_x[m.author.id]['lvl'] = 1
-    xpw_x[m.author.id]['xp'] += len(m.content) + 7
-    if len(m.content) > 1200:
-        xpw_x[m.author.id]['xp'] -= (len(m.content) + 9)
-    xpw_x[m.author.id]['name'] = m.author.display_name
+    with livejson.File('xp.json') as xp_list:
+        if m.author.id not in xp_list:
+            xp_list[m.author.id] = {}
+            xp_list[m.author.id]['xp'] = 0
+            xp_list[m.author.id]['lvl'] = 1
+        xp_list[m.author.id]['xp'] += len(m.content) + 7
+        if len(m.content) > 1200:
+            xp_list[m.author.id]['xp'] -= (len(m.content) + 9)
+        xp_list[m.author.id]['name'] = m.author.display_name
 
 
 @rasis.command(description="Toontown invasions.")
@@ -65,18 +66,19 @@ async def xp(ctx):
     """
     Experience system description. TODO: Don't forget to write this.
     """
-    if len(ctx.message.mentions) != 0:
-        u = xpw_x[ctx.message.mentions[0].id]
-        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
-        if u['lvl'] < 1:
-            u['lvl'] = 1
-        await rasis.say('{} is level {} with {}XP. They have {}XP to go before the next level.'.format(ctx.message.mentions[0].display_name, u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
-    else:
-        u = xpw_x[ctx.message.author.id]
-        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
-        if u['lvl'] < 1:
-            u['lvl'] = 1
-        await rasis.say('You are level {} with {}XP. You have {}XP to go before the next level.'.format(u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
+    with livejson.File('xp.json') as xp_list:
+        if len(ctx.message.mentions) != 0:
+            u = xp_list[ctx.message.mentions[0].id]
+            u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+            if u['lvl'] < 1:
+                u['lvl'] = 1
+            await rasis.say('{} is level {} with {}XP. They have {}XP to go before the next level.'.format(ctx.message.mentions[0].display_name, u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
+        else:
+            u = xp_list[ctx.message.author.id]
+            u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+            if u['lvl'] < 1:
+                u['lvl'] = 1
+            await rasis.say('You are level {} with {}XP. You have {}XP to go before the next level.'.format(u['lvl'], u['xp'], _nextXP(u['xp'], u['lvl'])))
 
 
 def _nextXP(xp, lvl):
@@ -89,25 +91,26 @@ async def rank(ctx):
     """
     XP Ranking.
     """
-    _xpw_x = {}
-    for k in xpw_x:
-        _xpw_x[k] = xpw_x[k]['xp']
-    _u = []
-    for u in sorted(_xpw_x, key=_xpw_x.get, reverse=True):
-        _u.append(u)
-        xpw_x[u]['rank'] = len(_u)
-    if len(ctx.message.mentions) != 0:
-        u = xpw_x[ctx.message.mentions[0].id]
-        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
-        if u['lvl'] < 1:
-            u['lvl'] = 1
-        await rasis.say('{} is #{} at level {} with {}XP.'.format(ctx.message.mentions[0].display_name, xpw_x[ctx.message.mentions[0].id]['rank'], xpw_x[ctx.message.mentions[0].id]['lvl'], xpw_x[ctx.message.mentions[0].id]['xp']))
-    else:
-        u = xpw_x[ctx.message.author.id]
-        u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
-        if u['lvl'] < 1:
-            u['lvl'] = 1
-        await rasis.say('You are #{} at level {} with {}XP.'.format(xpw_x[ctx.message.author.id]['rank'], xpw_x[ctx.message.author.id]['lvl'], xpw_x[ctx.message.author.id]['xp']))
+    with livejson.File('xp.json') as xp_list:
+        _xp_list = {}
+        for k in xp_list:
+            _xp_list[k] = xp_list[k]['xp']
+        _u = []
+        for u in sorted(_xp_list, key=_xp_list.get, reverse=True):
+            _u.append(u)
+            xp_list[u]['rank'] = len(_u)
+        if len(ctx.message.mentions) != 0:
+            u = xp_list[ctx.message.mentions[0].id]
+            u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+            if u['lvl'] < 1:
+                u['lvl'] = 1
+            await rasis.say('{} is #{} at level {} with {}XP.'.format(ctx.message.mentions[0].display_name, xp_list[ctx.message.mentions[0].id]['rank'], xp_list[ctx.message.mentions[0].id]['lvl'], xp_list[ctx.message.mentions[0].id]['xp']))
+        else:
+            u = xp_list[ctx.message.author.id]
+            u['lvl'] = math.floor(math.log((u['xp'] / 1000), 1.3)) + 1
+            if u['lvl'] < 1:
+                u['lvl'] = 1
+            await rasis.say('You are #{} at level {} with {}XP.'.format(xp_list[ctx.message.author.id]['rank'], xp_list[ctx.message.author.id]['lvl'], xp_list[ctx.message.author.id]['xp']))
 
 
 @rasis.command(pass_context=True)
@@ -115,23 +118,24 @@ async def top(ctx):
     """
     XP Leaderboards.
     """
-    _xpw_x = {}
-    for k in xpw_x:
-        _xpw_x[k] = xpw_x[k]['xp']
-    _u = []
-    for u in sorted(_xpw_x, key=_xpw_x.get, reverse=True):
-        _u.append(u)
-        xpw_x[u]['rank'] = len(_u)
-    m = 'Top 10 users:'
-    i = 1
-    for u in _u[0:10]:
-        xpw_x[u]['lvl'] = math.floor(math.log((xpw_x[u]['xp'] / 1000), 1.3)) + 1
-        if xpw_x[u]['lvl'] < 1:
-            xpw_x[u]['lvl'] = 1
-        m += '\n#{}: {} at level {} with {}XP.'.format(i, xpw_x[u]['name'], xpw_x[u]['lvl'], xpw_x[u]['xp'])
-        i += 1
-        # x = None
-    await rasis.say(m)
+    with livejson.File('xp.json') as xp_list:
+        _xp_list = {}
+        for k in xp_list:
+            _xp_list[k] = xp_list[k]['xp']
+        _u = []
+        for u in sorted(_xp_list, key=_xp_list.get, reverse=True):
+            _u.append(u)
+            xp_list[u]['rank'] = len(_u)
+        m = 'Top 10 users:'
+        i = 1
+        for u in _u[0:10]:
+            xp_list[u]['lvl'] = math.floor(math.log((xp_list[u]['xp'] / 1000), 1.3)) + 1
+            if xp_list[u]['lvl'] < 1:
+                xp_list[u]['lvl'] = 1
+            m += '\n#{}: {} at level {} with {}XP.'.format(i, xp_list[u]['name'], xp_list[u]['lvl'], xp_list[u]['xp'])
+            i += 1
+            # x = None
+        await rasis.say(m)
 
 
 @rasis.command(description="what the fuck do you think it is")
