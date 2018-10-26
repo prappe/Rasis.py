@@ -1,14 +1,16 @@
-import discord
-import asyncio
-import random
-import json
-import os
-import psutil
-from discord.ext import commands
-from cogs.utils import checks
-import livejson
-import math
 import aiohttp
+import asyncio
+import json
+import math
+import os
+import random
+
+from cogs.utils import checks
+import discord
+from discord.ext import commands
+import livejson
+import psutil
+
 
 rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 74
                      by Prappe — built with discord.py''',
