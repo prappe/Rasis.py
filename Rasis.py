@@ -8,11 +8,12 @@ from discord.ext import commands
 from cogs.utils import checks
 import livejson
 import math
-import requests
+import aiohttp
 
 rasis = commands.Bot(command_prefix=';;', description='''Rasis! build 74
                      by Prappe — built with discord.py''',
                      pm_help=None, help_attrs=dict(hidden=True))
+rasis.session = aiohttp.ClientSession(loop=rasis.loop)
 exts = ['cogs.music', 'cogs.times']
 
 xpw_x = livejson.File('xp.json')
@@ -48,8 +49,8 @@ async def on_message(m):
 @rasis.command(description="Toontown invasions.")
 async def inv():
     """Toontown invasions."""
-    r = requests.get('https://www.toontownrewritten.com/api/invasions')
-    ix = r.json()
+    async with rasis.session.get('https://www.toontownrewritten.com/api/invasions') as r:
+        ix = await r.json()
     if ix['error'] is not None:
         await rasis.say('Some error occurred: {}'.format(ix['error']))
     else:
